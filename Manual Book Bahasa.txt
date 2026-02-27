@@ -1,0 +1,73 @@
+🇮🇩 Panduan Penggunaan – Floating Protractor (QGIS)
+1️. Mengaktifkan Tool
+	• Klik ikon Floating Protractor di toolbar QGIS
+	• Klik kiri sekali pada canvas
+	• Protractor akan muncul dan bersifat floating (tidak terikat layer)
+
+2️. Mode Operasi
+	• Floating Protractor memiliki 3 mode:
+
+🔹 NORMAL
+	• 2 arm aktif
+	• Menampilkan arc highlight sudut
+
+🔹 SITE_AUDIT
+	• 3 arm aktif
+	• Tanpa arc highlight
+
+🔹 MULTI
+	• 3 hingga 6 arm
+	• Cocok untuk analisis sektor RF
+
+Mode dapat diubah melalui:
+
+	• Settings dialog
+	• Klik kanan pada ring → Context Menu
+
+3️. Menggeser Protractor
+	• Klik kiri + drag pada titik tengah (center)
+
+4️. Memutar Arm (Azimuth)
+	• Klik + drag pada garis arm
+	• Tekan Shift untuk rotasi bebas
+	• Tekan S untuk toggle Snap ON/OFF
+	• Default Snap: 5°
+
+5️. Mengatur Panjang Arm
+	• Klik + drag pada ujung arm (endpoint)
+
+6️. Mengatur Ukuran Ring
+	• Klik kanan + drag pada center
+	• Drag ke atas/bawah untuk memperbesar/memperkecil ring
+
+7️. Cardinal Direction
+	• Menampilkan:
+		N / E / S / W
+		North Triangle
+	• Dapat diatur di Settings.
+
+8️. Crosshair
+	• Dapat diaktifkan atau dinonaktifkan:
+	• Style: Plus / Dot / None
+	• Ukuran dan ketebalan dapat dikustomisasi
+
+9️. Reset Cepat
+	• Tekan R
+	Reset:
+	• Ring radius
+	• Arm radius
+	• Arm angle
+
+10. Shortcut Ringkas
+Shortcut		Fungsi
+R				Reset
+S				Toggle Snap
+ESC				Kembali ke Pan
+Klik kiri		Place / Move
+Klik kanan		Resize ring
+Drag arm		Rotate
+Drag endpoint	Resize
+
+1️1. Settings
+	• Tahan klik pada center (long press)
+	• Atau klik kanan pada ring → Settings
