@@ -85,23 +85,39 @@ class FloatingProtractorPlugin:
 
 
     def unload(self):
-        # Remove toolbar/menu
+        # =========================
+        # REMOVE MAIN TOOL ACTION
+        # =========================
         if self.action:
-            self.iface.removeToolBarIcon(self.action)
-            self.iface.removePluginMenu("Floating Protractor", self.action)
+            try:
+                self.iface.removeToolBarIcon(self.action)
+                self.iface.removePluginMenu("Floating Protractor", self.action)
+            except Exception:
+                pass
             self.action = None
 
-        # FORCE cleanup map tool & overlay
+        # =========================
+        # REMOVE ABOUT ACTION
+        # =========================
+        if hasattr(self, "action_about") and self.action_about:
+            try:
+                self.iface.removePluginMenu("Floating Protractor", self.action_about)
+            except Exception:
+                pass
+            self.action_about = None
+
+        # =========================
+        # CLEAN MAP TOOL & OVERLAY
+        # =========================
         if self.tool:
             try:
-                # Hide overlay explicitly
-                if hasattr(self.tool, "overlay") and self.tool.overlay:
-                    self.tool.overlay.setVisible(False)
-                    self.tool.overlay = None
-
-                # Unset map tool if active
                 if self.canvas.mapTool() == self.tool:
                     self.canvas.unsetMapTool(self.tool)
+
+                if hasattr(self.tool, "overlay") and self.tool.overlay:
+                    self.tool.overlay.setVisible(False)
+                    self.tool.overlay.scene().removeItem(self.tool.overlay)
+                    self.tool.overlay = None
 
             except Exception:
                 pass
