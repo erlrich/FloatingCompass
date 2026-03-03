@@ -5,7 +5,7 @@ version=1.0.1
 qgisMinimumVersion=3.22
 author=Achmad Amrulloh
 email=achmad.amrulloh@gmail.com
-about=Floating Protractor is a standalone canvas tool for precise angle and azimuth measurement. Designed for RF planning, optimization, and general GIS analysis, featuring snap-to-angle, dual arms, visual arc highlight, and customizable appearance.
+about=Floating Compass is a standalone floating orientation interface for real-time azimuth visualization and workflow-centric directional alignment in QGIS. Designed for RF planning and GIS professionals requiring persistent on-canvas orientation control.
 category=Analysis
 
 # Tags are comma separated with spaces allowed
