@@ -1,7 +1,7 @@
 [general]
 name=Floating Compass
-description=Standalone floating angle measurement tool with snap support, optimized for RF and GIS workflows.
-version=1.0.1
+description=Persistent floating orientation interface for real-time azimuth visualization and directional alignment in QGIS.
+version=1.0.2
 qgisMinimumVersion=3.22
 author=Achmad Amrulloh
 email=achmad.amrulloh@gmail.com
@@ -9,7 +9,7 @@ about=Floating Compass is a standalone floating orientation interface for real-t
 category=Analysis
 
 # Tags are comma separated with spaces allowed
-tags=Compass, Angle Measurement, Azimuth, RF Optimization, RF Planning, GIS, Measurement Tool
+tags=Compass, Azimuth, Orientation, RF Optimization, RF Planning, GIS, Overlay Tool
 icon=compass.svg
 homepage=https://github.com/erlrich/FloatingCompass
 repository=https://github.com/erlrich/FloatingCompass
