@@ -15,7 +15,7 @@
 from qgis.PyQt.QtWidgets import (
     QDialog, QVBoxLayout, QTabWidget, QWidget, QMessageBox, QComboBox, 
     QGroupBox, QFormLayout, QCheckBox, QSpinBox, QLineEdit, 
-    QHBoxLayout, QPushButton, QLabel, QColorDialog
+    QHBoxLayout, QPushButton, QLabel, QColorDialog, QFrame
 )
 from qgis.PyQt.QtCore import QSettings, Qt
 from qgis.PyQt.QtGui import QColor
@@ -308,6 +308,33 @@ class FloatingCompassSettingsDialog(QDialog):
         v_elem.addWidget(self.chk_show_arc)
         v_elem.addWidget(self.chk_show_angle_text)
 
+        # ==========================
+        # 🔥 FEATURE-LIMITED TRIAL: PRO feature placeholders
+        # ==========================
+        # Placeholder untuk fitur PRO yang tidak tersedia di Free
+        pro_placeholder = QLabel(
+            "🔒 <b>PRO Features</b> (Upgrade to unlock):\n"
+            "• Multi-Arm Mode (2-6 arms)\n"
+            "• Beam Profiles (Ericsson, Huawei)\n"
+            "• HUD with ISG\n"
+            "• Ruler Mode & Markers\n"
+            "• Customizable everything\n\n"
+            "🚀 <a href='https://github.com/erlrich/FloatingCompassPro' style='color: #f39c12; font-weight: bold;'>Upgrade to Pro now!</a>"
+        )
+        pro_placeholder.setTextFormat(Qt.TextFormat.RichText)
+        pro_placeholder.setOpenExternalLinks(True)
+        pro_placeholder.setStyleSheet("""
+            QLabel {
+                background-color: #fef9e7;
+                border: 1px solid #f39c12;
+                border-radius: 6px;
+                padding: 12px;
+                margin: 8px 0;
+            }
+        """)
+        pro_placeholder.setWordWrap(True)
+        v_elem.addWidget(pro_placeholder)
+
         grp_cross = QGroupBox("Crosshair")
         f_cross = QFormLayout(grp_cross)
         f_cross.addRow(self.chk_show_crosshair)
@@ -349,10 +376,40 @@ class FloatingCompassSettingsDialog(QDialog):
         f_text_layout = QFormLayout(grp_text_layout)
         f_text_layout.addRow("Angle Text Distance:", self.spin_angle_text_distance)
 
+        # ==========================
+        # 🔥 PRO Feature Placeholder - Labels
+        # ==========================
+        pro_labels_placeholder = QLabel(
+            "🔒 <b>PRO Label Features:</b>\n"
+            "• Custom Arm Label Names\n"
+            "• Label Placement (Radial, Tangential, Smart Avoid)\n"
+            "• Label Background (Rectangle, Rounded, Pill)\n"
+            "• Beam Labels (NON-HOS, HOS-A, ...)\n"
+            "• Azimuth Labels\n\n"
+            "🚀 <a href='https://github.com/erlrich/FloatingCompassPro' style='color: #f39c12; font-weight: bold;'>Upgrade to Pro</a>"
+        )
+        pro_labels_placeholder.setTextFormat(Qt.TextFormat.RichText)
+        pro_labels_placeholder.setOpenExternalLinks(True)
+        pro_labels_placeholder.setWordWrap(True)
+        pro_labels_placeholder.setStyleSheet("""
+            QLabel {
+                background-color: #fef9e7;
+                border: 1px solid #f39c12;
+                border-radius: 6px;
+                padding: 12px;
+                margin: 8px 0;
+            }
+        """)
+
+        grp_pro_labels = QGroupBox("PRO Features")
+        v_pro_labels = QVBoxLayout(grp_pro_labels)
+        v_pro_labels.addWidget(pro_labels_placeholder)
+
         v_lbl.addWidget(grp_labels)
         v_lbl.addWidget(grp_font)
         v_lbl.addWidget(grp_fx)
         v_lbl.addWidget(grp_text_layout)
+        v_lbl.addWidget(grp_pro_labels)
         v_lbl.addStretch()
         self.tabs.addTab(tab_lbl, "Labels & Text")
         
@@ -381,9 +438,39 @@ class FloatingCompassSettingsDialog(QDialog):
         f_radius.addRow("Ring Radius Min:", self.spin_ring_radius_min)
         f_radius.addRow("Ring Radius Max:", self.spin_ring_radius_max)
 
+        # ==========================
+        # 🔥 PRO Feature Placeholder
+        # ==========================
+        pro_visual_placeholder = QLabel(
+            "🔒 <b>Additional PRO Visual Features:</b>\n"
+            "• Endpoint Shapes (Arrow, Stealth Arrow)\n"
+            "• Line Styles (Dash, Dot, Dash Dot)\n"
+            "• Ring Label Font Customization\n"
+            "• Label Background (Rounded, Pill)\n"
+            "• Smart Label Placement\n\n"
+            "🚀 <a href='https://github.com/erlrich/FloatingCompassPro' style='color: #f39c12; font-weight: bold;'>Upgrade to Pro</a>"
+        )
+        pro_visual_placeholder.setTextFormat(Qt.TextFormat.RichText)
+        pro_visual_placeholder.setOpenExternalLinks(True)
+        pro_visual_placeholder.setWordWrap(True)
+        pro_visual_placeholder.setStyleSheet("""
+            QLabel {
+                background-color: #fef9e7;
+                border: 1px solid #f39c12;
+                border-radius: 6px;
+                padding: 12px;
+                margin: 8px 0;
+            }
+        """)
+
+        grp_pro_visual = QGroupBox("PRO Features")
+        v_pro_visual = QVBoxLayout(grp_pro_visual)
+        v_pro_visual.addWidget(pro_visual_placeholder)
+
         v_visual.addWidget(grp_geo)
         v_visual.addWidget(grp_ticks)
         v_visual.addWidget(grp_radius)
+        v_visual.addWidget(grp_pro_visual)
         v_visual.addStretch()
         self.tabs.addTab(tab_visual, "Visual Style")
 
@@ -424,12 +511,37 @@ class FloatingCompassSettingsDialog(QDialog):
         v_general.insertWidget(1, grp_cardinal)
 
         # =================================================
-        # BUTTON BAR (UNCHANGED)
+        # BUTTON BAR
         # =================================================
         btns = QHBoxLayout()
+        
+        # ==========================
+        # 🔥 UPGRADE TO PRO BUTTON (BARU)
+        # ==========================
+        self.btn_upgrade = QPushButton("🚀 Upgrade to Pro")
+        self.btn_upgrade.setStyleSheet("""
+            QPushButton {
+                background-color: #f39c12;
+                color: white;
+                font-weight: bold;
+                border-radius: 6px;
+                padding: 8px 16px;
+            }
+            QPushButton:hover {
+                background-color: #e67e22;
+            }
+            QPushButton:pressed {
+                background-color: #d35400;
+            }
+        """)
+        self.btn_upgrade.setToolTip("Upgrade to Floating Compass Pro for advanced features")
+        self.btn_upgrade.clicked.connect(self._show_upgrade_dialog)
+        
         self.btn_reset = QPushButton("Reset to Default")
         self.btn_export = QPushButton("Export JSON")
         self.btn_import = QPushButton("Import JSON")
+        
+        btns.addWidget(self.btn_upgrade)
         btns.addWidget(self.btn_reset)
         btns.addWidget(self.btn_export)
         btns.addWidget(self.btn_import)
@@ -687,11 +799,11 @@ class FloatingCompassSettingsDialog(QDialog):
                 "Changing these values may make the tool harder to use or behave unexpectedly.\n\n"
                 "This option is recommended for advanced users only.\n\n"
                 "Do you want to continue?",
-                QMessageBox.Yes | QMessageBox.Cancel,
-                QMessageBox.Cancel
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.Cancel,
+                QMessageBox.StandardButton.Cancel
             )
 
-            if ret != QMessageBox.Yes:
+            if ret != QMessageBox.StandardButton.Yes:
                 self.chk_enable_hit_test.setChecked(False)
                 return
 
@@ -940,8 +1052,85 @@ class FloatingCompassSettingsDialog(QDialog):
             )
 
 
-
-
+    def _show_upgrade_dialog(self):
+        """
+        Show upgrade dialog with feature comparison from context menu.
+        """
+        from qgis.PyQt.QtWidgets import QMessageBox, QPushButton
+        from qgis.PyQt.QtCore import Qt, QUrl
+        from qgis.PyQt.QtGui import QDesktopServices
+        
+        msg = QMessageBox(self)
+        msg.setWindowTitle("🚀 Upgrade to Floating Compass Pro")
+        msg.setTextFormat(Qt.TextFormat.RichText)
+        msg.setText("""
+            <h2 style="color: #2c3e50;">Floating Compass Pro</h2>
+            <p style="font-size: 14px; color: #555;">
+                Upgrade now and unlock <b>advanced features</b> for RF Planning and GIS professionals:
+            </p>
+            <ul style="font-size: 13px; color: #333; line-height: 1.8;">
+                <li>✅ <b>Multi-Arm Mode</b> (up to 6 independent arms)</li>
+                <li>✅ <b>Actual vs Proposed</b> Group System</li>
+                <li>✅ <b>Beam Profiles</b> (Ericsson, Huawei, Generic)</li>
+                <li>✅ <b>HUD</b> with Live ISG (Inter Sector Gap)</li>
+                <li>✅ <b>Ruler Mode &amp; Markers</b> (measure distance &amp; azimuth)</li>
+                <li>✅ <b>Priority Support</b> &amp; Lifetime Updates</li>
+                <li>✅ <b>Full Customization</b> (colors, fonts, styles)</li>
+            </ul>
+            <br>
+            <p style="font-size: 13px; color: #555;">
+                <a href="https://github.com/erlrich/FloatingCompassPro" style="color: #3498db; font-weight: bold;">
+                    📖 View Full Feature List &amp; Manual
+                </a>
+            </p>
+            <br>
+            <p style="font-size: 11px; color: #999;">
+                💡 No commitment — explore the features first.
+            </p>
+        """)
+        
+        # ==========================
+        # TOMBOL CUSTOM
+        # ==========================
+        btn_learn = QPushButton("📖 Learn More")
+        btn_learn.setStyleSheet("""
+            QPushButton {
+                background-color: #3498db;
+                color: white;
+                font-weight: bold;
+                padding: 8px 20px;
+                border-radius: 6px;
+            }
+            QPushButton:hover {
+                background-color: #2980b9;
+            }
+        """)
+        btn_learn.clicked.connect(lambda: QDesktopServices.openUrl(QUrl("https://github.com/erlrich/FloatingCompassPro")))
+        
+        btn_later = QPushButton("Later")
+        btn_later.setStyleSheet("""
+            QPushButton {
+                background-color: #95a5a6;
+                color: white;
+                padding: 8px 20px;
+                border-radius: 6px;
+            }
+            QPushButton:hover {
+                background-color: #7f8c8d;
+            }
+        """)
+        btn_later.clicked.connect(msg.accept)
+        
+        # ==========================
+        # TAMBAHKAN TOMBOL KE DIALOG
+        # ==========================
+        msg.addButton(btn_learn, QMessageBox.ButtonRole.AcceptRole)
+        msg.addButton(btn_later, QMessageBox.ButtonRole.RejectRole)
+        
+        msg.setIcon(QMessageBox.Icon.Information)
+        msg.exec()
+        
+      
     def collect(self):
         data = {
             # =====================
@@ -1104,8 +1293,9 @@ class FloatingCompassSettingsDialog(QDialog):
             if col is not None:
                 try:
                     s.setValue(f"arm_{idx}_color", col.name())
-                except Exception:
-                    pass
+                except Exception as e:
+                    import sys
+                    print(f"Warning: Failed to load settings: {e}", file=sys.stderr)
 
         s.endGroup()
 

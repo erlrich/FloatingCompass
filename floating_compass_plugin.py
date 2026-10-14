@@ -14,11 +14,14 @@
 
 # floating_compass_plugin.py
 import os
-from qgis.PyQt.QtWidgets import QAction
-from qgis.PyQt.QtGui import QIcon
+from qgis.PyQt.QtGui import QAction, QIcon
+from qgis.PyQt.QtCore import QTimer
+from qgis.core import QgsMessageLog, Qgis
 
 from .floating_compass_tool import FloatingCompassMapTool
 from .floating_compass_about_dialog import FloatingCompassAboutDialog
+from .floating_compass_news_manager import NewsManager
+from .floating_compass_news_dialog import NewsDialog
 
 
 class FloatingCompassPlugin:
@@ -28,11 +31,12 @@ class FloatingCompassPlugin:
         self.canvas = iface.mapCanvas()
         self.action = None
         self.tool = None
+        self._news_manager = NewsManager()
 
     def initGui(self):
         # ---- ICON PATH ----
         plugin_dir = os.path.dirname(__file__)
-        icon_path = os.path.join(plugin_dir, "icon", "compass.svg")
+        icon_path = os.path.join(plugin_dir, "icon", "compass.png")
 
         # =========================
         # MAIN TOOL ACTION
@@ -78,10 +82,51 @@ class FloatingCompassPlugin:
         # =========================
         self.tool.plugin_action = self.action
 
+        # =========================
+        # NEWS CHECK (deferred — biar tidak block plugin load)
+        # =========================
+        QTimer.singleShot(2000, self._check_news)
+
+    
+    def _check_news(self):
+        """
+        Check & display news from GitHub JSON.
+
+        Behavior:
+        - Fetch hanya kalau sudah lewat 7 hari (via NewsManager)
+        - Tampilkan dialog kalau ada unread news
+        - Semua error di-handle silent (tidak block plugin load)
+        """
+        try:
+            # Fetch kalau sudah waktunya
+            if self._news_manager.should_fetch():
+                self._news_manager.fetch()
+
+            # Cek unread news
+            unread = self._news_manager.get_unread_news()
+            if not unread:
+                return
+
+            # Tampilkan dialog
+            dlg = NewsDialog(
+                unread,
+                parent=self.iface.mainWindow(),
+                mark_all_callback=self._news_manager.mark_all_as_read,
+            )
+            dlg.exec()
+
+        except Exception as e:
+            # Silent fail — jangan block plugin load
+            QgsMessageLog.logMessage(
+                f"News check exception: {e}",
+                "Floating Compass",
+                Qgis.MessageLevel.Warning,
+            )
+
     
     def show_about_dialog(self):
         dlg = FloatingCompassAboutDialog(self.iface.mainWindow())
-        dlg.exec_()
+        dlg.exec()
 
 
     def unload(self):
@@ -92,8 +137,10 @@ class FloatingCompassPlugin:
             try:
                 self.iface.removeToolBarIcon(self.action)
                 self.iface.removePluginMenu("Floating Compass", self.action)
-            except Exception:
-                pass
+            except Exception as e:
+                # Log error but continue cleanup
+                import sys
+                print(f"Warning: Failed to remove toolbar icon/menu: {e}", file=sys.stderr)
             self.action = None
 
         # =========================
@@ -102,8 +149,9 @@ class FloatingCompassPlugin:
         if hasattr(self, "action_about") and self.action_about:
             try:
                 self.iface.removePluginMenu("Floating Compass", self.action_about)
-            except Exception:
-                pass
+            except Exception as e:
+                import sys
+                print(f"Warning: Failed to remove about menu: {e}", file=sys.stderr)
             self.action_about = None
 
         # =========================
@@ -119,8 +167,9 @@ class FloatingCompassPlugin:
                     self.tool.overlay.scene().removeItem(self.tool.overlay)
                     self.tool.overlay = None
 
-            except Exception:
-                pass
+            except Exception as e:
+                import sys
+                print(f"Warning: Failed to clean map tool: {e}", file=sys.stderr)
 
             self.tool = None
 

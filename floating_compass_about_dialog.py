@@ -27,8 +27,8 @@ class FloatingCompassAboutDialog(QDialog):
         # Header Section dengan Ikon dan Judul
         header_layout = QVBoxLayout()                                     
         title = QLabel("Floating Compass")
-        title.setFont(QFont("Arial", 14, QFont.Bold))
-        title.setAlignment(Qt.AlignCenter)
+        title.setFont(QFont("Arial", 14, QFont.Weight.Bold))
+        title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         header_layout.addWidget(title)
         header_layout.addStretch()
         
@@ -42,7 +42,7 @@ class FloatingCompassAboutDialog(QDialog):
             "LinkedIn: https://www.linkedin.com/in/achmad-amrulloh/\n\n"
             "© 2026 Dinzo. All rights reserved."
         )
-        info.setAlignment(Qt.AlignCenter)
+        info.setAlignment(Qt.AlignmentFlag.AlignCenter)
         info.setWordWrap(True)
         info.setStyleSheet("margin-top: 10px; margin-bottom: 10px;")                                                            
 
@@ -53,4 +53,4 @@ class FloatingCompassAboutDialog(QDialog):
         layout.addWidget(title)
         layout.addWidget(info)
         layout.addStretch()
-        layout.addWidget(btn, 0, Qt.AlignCenter)
+        layout.addWidget(btn, 0, Qt.AlignmentFlag.AlignCenter)

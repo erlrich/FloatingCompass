@@ -1,19 +1,49 @@
 [general]
 name=Floating Compass
-description=Persistent floating orientation interface for real-time azimuth visualization and directional alignment in QGIS.
-version=1.0.2
+description=Persistent floating orientation interface for real-time azimuth visualization and directional alignment in QGIS. Free version includes 6-arm basic function. Upgrade to Pro for multi-arm full functionality, beam profiles, HUD, ruler mode, and more!
+version=1.1.1
 qgisMinimumVersion=3.22
+qgisMaximumVersion=4.99
 author=Achmad Amrulloh
 email=achmad.amrulloh@gmail.com
-about=Floating Compass is a standalone floating orientation interface for real-time azimuth visualization and workflow-centric directional alignment in QGIS. Designed for RF planning and GIS professionals requiring persistent on-canvas orientation control.
+about=Floating Compass is a standalone floating orientation interface for real-time azimuth visualization and workflow-centric directional alignment in QGIS. Designed for RF planning and GIS professionals. Free version: 6-arm basic function. Pro version available with multi-arm full functionality, beam profiles, HUD, ruler mode, and more. Visit https://github.com/erlrich/FloatingCompassPro for details.
 category=Analysis
 
 # Tags are comma separated with spaces allowed
-tags=Compass, Azimuth, Orientation, RF Optimization, RF Planning, GIS, Overlay Tool
-icon=compass.svg
+tags=Compass, Azimuth, Orientation, RF Optimization, RF Planning, GIS, Overlay Tool, Multi-Arm, Beam Profile, HUD, Ruler, Marker
+icon=compass.png
 homepage=https://github.com/erlrich/FloatingCompass
 repository=https://github.com/erlrich/FloatingCompass
 tracker=https://github.com/erlrich/FloatingCompass/issues
-changelog=Initial version
+
 experimental=False
 deprecated=False
+
+changelog=1.1.1 (2026-10-14)
+    - Add informational news panel (in-plugin notifications)
+    - Add news manager with 7-day fetch cache
+    - Add news dialog with mark-as-read support
+  1.1.0 (2026-10-14)
+    - Qt6 compatibility upgrade for QGIS 4
+    - Update PyQt enum namespaces (Qt6 style)
+    - Migrate exec_() to exec() for dialog compatibility
+    - Relocate QAction import from QtWidgets to QtGui
+    - Add qgisMaximumVersion=4.99 for QGIS 4 support
+    - Fix shortcut R (reset geometry to default)
+    - Fix Show Ring toggle (ring + glow visibility)
+    - Fix North triangle independence from cardinal directions
+  1.0.4 (2026-08-01)
+    - Fix all remaining Bandit security issues (try-except-pass blocks)
+    - Add error logging for all exception handlers
+    - Replace silent try-except-pass with proper error logging
+    - Improve error handling in unload(), settings, and tool
+    - Minor UX improvements and interface updates
+    - Add "Show Ring" toggle in ring context menu
+    - Add upgrade information panel in Settings dialog
+    - Add product upgrade option in ring context menu
+    - Add informational dialog when closing compass
+    - Update description and about metadata
+  1.0.3 (2026-06-23)
+    - Add Exit menu, right click on compass ring (shortcut Esc).
+  1.0.2 (2026-03-03)
+    - Initial Release

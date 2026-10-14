@@ -27,11 +27,13 @@ class FloatingCompassOverlay(QgsMapCanvasItem):
         self.setVisible(False)
 
     # =================================================
+    # =================================================
+    # =================================================
     def paint(self, painter, option, widget):
         if self.tool.center is None:
             return
 
-        painter.setRenderHint(QPainter.Antialiasing)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         c = self.tool.center
 
         # =====================
@@ -71,27 +73,30 @@ class FloatingCompassOverlay(QgsMapCanvasItem):
         r = self.tool.ring_radius
         ring_w = getattr(self.tool, "ring_line_width", 3)
 
+        show_ring = getattr(self.tool, "show_ring", True)
+
         # =====================
         # FONTS (ADVANCE VISUAL FIX)
         # =====================
         label_font_size = getattr(self.tool, "label_font_size", 10)
         angle_font_size = getattr(self.tool, "angle_font_size", 10)
 
-        label_font = QFont("Arial", label_font_size, QFont.Bold)
-        angle_font = QFont("Arial", angle_font_size, QFont.Bold)
+        label_font = QFont("Arial", label_font_size, QFont.Weight.Bold)
+        angle_font = QFont("Arial", angle_font_size, QFont.Weight.Bold)
 
         # =====================
         # RING GLOW
         # =====================
-        glow = QColor(ring_col)
-        glow.setAlpha(self.tool.ring_glow_alpha)
+        if show_ring:
+            glow = QColor(ring_col)
+            glow.setAlpha(self.tool.ring_glow_alpha)
 
-        painter.setBrush(Qt.NoBrush)
-        glow_pen = QPen(glow, ring_w + 4)
-        glow_pen.setCapStyle(Qt.RoundCap)
-        glow_pen.setJoinStyle(Qt.RoundJoin)
-        painter.setPen(glow_pen)
-        painter.drawEllipse(c, r, r)
+            painter.setBrush(Qt.BrushStyle.NoBrush)
+            glow_pen = QPen(glow, ring_w + 4)
+            glow_pen.setCapStyle(Qt.PenCapStyle.RoundCap)
+            glow_pen.setJoinStyle(Qt.PenJoinStyle.RoundJoin)
+            painter.setPen(glow_pen)
+            painter.drawEllipse(c, r, r)
 
         # =====================
         # ARMS
@@ -211,14 +216,14 @@ class FloatingCompassOverlay(QgsMapCanvasItem):
                 arc_col = QColor(self.tool.color_arc)
                 arc_col.setAlpha(130 if active else 90)
 
-                painter.setBrush(Qt.NoBrush)
+                painter.setBrush(Qt.BrushStyle.NoBrush)
                 arc_w = getattr(self.tool, "arc_line_width", 0)
                 if arc_w <= 0:
                     arc_w = max(2, ring_w - 1)
 
                 arc_pen = QPen(arc_col, arc_w)
 
-                arc_pen.setCapStyle(Qt.RoundCap)
+                arc_pen.setCapStyle(Qt.PenCapStyle.RoundCap)
                 painter.setPen(arc_pen)
                 painter.drawArc(
                     arc_rect,
@@ -229,14 +234,15 @@ class FloatingCompassOverlay(QgsMapCanvasItem):
         # =====================
         # RING + TICKS
         # =====================
-        rw = ring_w + 2 if self.tool.hover_handle == self.tool.HANDLE_ROTATE_BOTH else ring_w
-        ring_pen = QPen(ring_col, rw)
-        ring_pen.setCapStyle(Qt.RoundCap)
-        ring_pen.setJoinStyle(Qt.RoundJoin)
+        if show_ring:
+            rw = ring_w + 2 if self.tool.hover_handle == self.tool.HANDLE_ROTATE_BOTH else ring_w
+            ring_pen = QPen(ring_col, rw)
+            ring_pen.setCapStyle(Qt.PenCapStyle.RoundCap)
+            ring_pen.setJoinStyle(Qt.PenJoinStyle.RoundJoin)
 
-        painter.setBrush(Qt.NoBrush)  # anti fill
-        painter.setPen(ring_pen)
-        painter.drawEllipse(c, r, r)
+            painter.setBrush(Qt.BrushStyle.NoBrush)  # anti fill
+            painter.setPen(ring_pen)
+            painter.drawEllipse(c, r, r)
 
         self.draw_degree_ticks(painter, c, r, ring_col)
         
@@ -244,7 +250,12 @@ class FloatingCompassOverlay(QgsMapCanvasItem):
         # CARDINAL DIRECTIONS
         # =====================
         self.draw_cardinal_directions(painter, c, r)
-   
+
+        # =====================
+        # NORTH TRIANGLE (INDEPENDENT)
+        # =====================
+        self.draw_north_triangle(painter, c, r)
+        
         # =====================
         # ANGLE TEXT (NORMAL ONLY)
         # =====================
@@ -280,7 +291,7 @@ class FloatingCompassOverlay(QgsMapCanvasItem):
         # CENTER DOT (ALWAYS)
         # =====================
         center_dot = getattr(self.tool, "center_dot_radius_px", 6)
-        painter.setPen(Qt.NoPen)
+        painter.setPen(Qt.PenStyle.NoPen)
         painter.setBrush(QBrush(ring_col))
         painter.drawEllipse(c, center_dot, center_dot)
 
@@ -300,14 +311,14 @@ class FloatingCompassOverlay(QgsMapCanvasItem):
             if style == "dot":
                 # small dot only (independent from center dot)
                 r = max(2, int(size / 4))
-                painter.setPen(Qt.NoPen)
+                painter.setPen(Qt.PenStyle.NoPen)
                 painter.setBrush(QBrush(cross_col))
                 painter.drawEllipse(c, r, r)
 
             elif style == "plus":
                 half = int(size)
                 pen = QPen(cross_col, max(1, thickness))
-                pen.setCapStyle(Qt.RoundCap)
+                pen.setCapStyle(Qt.PenCapStyle.RoundCap)
                 painter.setPen(pen)
 
                 painter.drawLine(
@@ -321,6 +332,7 @@ class FloatingCompassOverlay(QgsMapCanvasItem):
 
 
 
+    # =================================================
     # =================================================
     def draw_shadow_text(
         self,
@@ -362,7 +374,7 @@ class FloatingCompassOverlay(QgsMapCanvasItem):
         shadow_enabled = getattr(self.tool, "shadow_enabled", True)
         if shadow_enabled and shadow_col.alpha() > 0:
             painter.setPen(shadow_col)
-            painter.setBrush(Qt.NoBrush)
+            painter.setBrush(Qt.BrushStyle.NoBrush)
             painter.drawText(pos + QPointF(1.5, 1.5), text)  # Keep fixed offset
 
         # =====================
@@ -371,7 +383,7 @@ class FloatingCompassOverlay(QgsMapCanvasItem):
         outline_enabled = getattr(self.tool, "outline_enabled", True)
         if outline_enabled and outline_col.alpha() > 0:
             painter.setPen(outline_col)
-            painter.setBrush(Qt.NoBrush)
+            painter.setBrush(Qt.BrushStyle.NoBrush)
             
             # tetap pakai 4 arah (fitur lama TIDAK dihapus)
             for dx, dy in (
@@ -387,7 +399,7 @@ class FloatingCompassOverlay(QgsMapCanvasItem):
         # =====================
         if fill_col.alpha() > 0:
             painter.setPen(fill_col)
-            painter.setBrush(Qt.NoBrush)
+            painter.setBrush(Qt.BrushStyle.NoBrush)
             painter.drawText(pos, text)
         
         painter.restore()
@@ -412,7 +424,7 @@ class FloatingCompassOverlay(QgsMapCanvasItem):
         outline_col = QColor(t.color_outline)
         shadow_col = QColor(t.color_shadow)
 
-        font = QFont("Arial", t.cardinal_font_size, QFont.Bold)
+        font = QFont("Arial", t.cardinal_font_size, QFont.Weight.Bold)
 
         items = [
             ("N",   0),
@@ -442,45 +454,77 @@ class FloatingCompassOverlay(QgsMapCanvasItem):
                 shadow_col
             )
 
-            # =================================================
-            # 🔥 NORTH ARROW — SINGLE MIRRORED BLADE
-            # =================================================
-            if text == "N" and getattr(t, "show_north_triangle", True):
+    
+    # =================================================
+    # NORTH TRIANGLE (INDEPENDENT)
+    # =================================================
+    def draw_north_triangle(self, painter, center, radius):
+        """
+        Draw north triangle arrow independently from cardinal directions.
+        Controlled by show_north_triangle setting.
+        """
+        t = self.tool
 
-                size = t.north_triangle_size_px * 2.0
+        # Guard: hanya gambar jika show_north_triangle=True
+        if not getattr(t, "show_north_triangle", True):
+            return
 
-                bx = x
-                by = y - h / 2 + 1 # Tweak Arrow pos
+        from qgis.PyQt.QtGui import QFont, QColor, QPolygonF
+        from qgis.PyQt.QtCore import QPointF
+        import math
 
-                # =========================
-                # BASE BLADE (LEFT SHAPE)
-                # =========================
-                tip = QPointF(bx, by - size * 0.95)
-                base_left = QPointF(bx - size * 0.70, by + size * 0.45)
-                base_center = QPointF(bx, by + size * 0.05)
+        # =====================
+        # COMPUTE "N" POSITION
+        # =====================
+        # Sama dengan posisi cardinal "N" (deg=0)
+        font = QFont("Arial", t.cardinal_font_size, QFont.Weight.Bold)
+        painter.setFont(font)
 
-                # mirror of base_left
-                base_right = QPointF(
-                    bx + (bx - base_left.x()),
-                    base_left.y()
-                )
+        w = painter.fontMetrics().boundingRect("N").width()
+        h = painter.fontMetrics().boundingRect("N").height()
 
-                arrow_poly = QPolygonF([
-                    tip,
-                    base_right,
-                    base_center,
-                    base_left
-                ])
+        r = radius - t.cardinal_offset_px
+        rad = math.radians(0)  # N = 0 degrees
+        x = center.x() + r * math.sin(rad)
+        y = center.y() - r * math.cos(rad)
 
-                painter.save()
-                pen = QPen(QColor("#000000"))   # black outline
-                pen.setWidth(1)
-                painter.setPen(pen)
-                painter.setBrush(QColor("#E31B23"))   # RED
-                painter.drawPolygon(arrow_poly)
-                painter.restore()
+        # =====================
+        # DRAW NORTH TRIANGLE
+        # =====================
+        size = t.north_triangle_size_px * 2.0
 
+        bx = x
+        by = y - h / 2 + 1  # Tweak Arrow pos
 
+        # =========================
+        # BASE BLADE (LEFT SHAPE)
+        # =========================
+        tip = QPointF(bx, by - size * 0.95)
+        base_left = QPointF(bx - size * 0.70, by + size * 0.45)
+        base_center = QPointF(bx, by + size * 0.05)
+
+        # mirror of base_left
+        base_right = QPointF(
+            bx + (bx - base_left.x()),
+            base_left.y()
+        )
+
+        arrow_poly = QPolygonF([
+            tip,
+            base_right,
+            base_center,
+            base_left
+        ])
+
+        painter.save()
+        pen = QPen(QColor("#000000"))   # black outline
+        pen.setWidth(1)
+        painter.setPen(pen)
+        painter.setBrush(QColor("#E31B23"))   # RED
+        painter.drawPolygon(arrow_poly)
+        painter.restore()
+        
+        
     def compute_angle_text_pos(self, center, arm_a_angle, arm_b_angle):
         span = (arm_b_angle - arm_a_angle) % 360
         if span < 1:
@@ -514,8 +558,8 @@ class FloatingCompassOverlay(QgsMapCanvasItem):
         ) else arm_w
 
         pen = QPen(color, w)
-        pen.setCapStyle(Qt.RoundCap)
-        pen.setJoinStyle(Qt.RoundJoin)
+        pen.setCapStyle(Qt.PenCapStyle.RoundCap)
+        pen.setJoinStyle(Qt.PenJoinStyle.RoundJoin)
         painter.setPen(pen)
         painter.drawLine(c, end)
 
@@ -523,7 +567,7 @@ class FloatingCompassOverlay(QgsMapCanvasItem):
         if ep <= 0:
             ep = max(3, arm_w - 1)
 
-        painter.setPen(Qt.NoPen)
+        painter.setPen(Qt.PenStyle.NoPen)
         painter.setBrush(QBrush(color))
         painter.drawEllipse(end, ep, ep)
 
@@ -543,7 +587,7 @@ class FloatingCompassOverlay(QgsMapCanvasItem):
             y2 = center.y() - radius * math.cos(rad)
 
             pen = QPen(ring_col, ring_w if deg % major == 0 else 1)
-            pen.setCapStyle(Qt.RoundCap)
+            pen.setCapStyle(Qt.PenCapStyle.RoundCap)
             painter.setPen(pen)
             painter.drawLine(QPointF(x1, y1), QPointF(x2, y2))
 
@@ -562,7 +606,7 @@ class FloatingCompassOverlay(QgsMapCanvasItem):
             painter,
             QPointF(x - 10, y + 5),
             str(deg),
-            QFont("Arial", font_sz, QFont.Bold),
+            QFont("Arial", font_sz, QFont.Weight.Bold),
             ring_col,
             QColor(self.tool.color_outline),
             QColor(self.tool.color_shadow)

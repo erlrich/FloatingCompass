@@ -12,7 +12,7 @@
 # proper attribution is not permitted.
 # ============================================================
 
-from qgis.PyQt.QtCore import Qt, QPointF, QSettings, QTimer
+from qgis.PyQt.QtCore import Qt, QPointF, QSettings, QTimer, QDateTime
 from qgis.PyQt.QtGui import QGuiApplication
 from qgis.gui import QgsMapTool
 import math
@@ -69,7 +69,9 @@ class FloatingCompassMapTool(QgsMapTool):
                 if v is None:
                     return default
                 return int(v)
-            except Exception:
+            except Exception as e:
+                import sys
+                print(f"Warning: Failed to parse int for {key}: {e}", file=sys.stderr)
                 return default
 
         # =====================
@@ -100,6 +102,7 @@ class FloatingCompassMapTool(QgsMapTool):
         self.show_arms = str(s.value("show_arms", "true")).lower() == "true"
         self.show_arc = str(s.value("show_arc", "true")).lower() == "true"
         self.show_angle_text = str(s.value("show_angle_text", "true")).lower() == "true"
+        self.show_ring = str(s.value("show_ring", "true")).lower() == "true"  # BARU
         
         # 🔥 NEW: Load text effects settings
         self.outline_enabled = str(s.value("outline_enabled", "true")).lower() == "true"
@@ -296,7 +299,9 @@ class FloatingCompassMapTool(QgsMapTool):
             if q_radius is not None:
                 try:
                     q_radius = int(q_radius)
-                except Exception:
+                except Exception as e:
+                    import sys
+                    print(f"Warning: Failed to parse radius for arm {idx}: {e}", file=sys.stderr)
                     q_radius = None
 
             # =========================
@@ -462,15 +467,18 @@ class FloatingCompassMapTool(QgsMapTool):
                 if snap["angle"] is not None:
                     try:
                         arm["angle_deg"] = float(snap["angle"])
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        import sys
+                        print(f"Warning: Failed to parse arm angle: {e}", file=sys.stderr)
 
                 # radius (🔥 FIX UTAMA)
                 raw_radius = None
                 if snap["radius"] is not None:
                     try:
                         raw_radius = int(snap["radius"])
-                    except Exception:
+                    except Exception as e:
+                        import sys
+                        print(f"Warning: Failed to parse radius from snapshot for arm {idx}: {e}", file=sys.stderr)
                         raw_radius = None
 
                 if raw_radius is None:
@@ -487,8 +495,9 @@ class FloatingCompassMapTool(QgsMapTool):
                     try:
                         from qgis.PyQt.QtGui import QColor
                         arm["color"] = QColor(snap["color"])
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        import sys
+                        print(f"Warning: Failed to set arm color from snapshot for arm {idx}: {e}", file=sys.stderr)
 
             # sync helper fields
             if len(self.arms) >= 2:
@@ -503,7 +512,7 @@ class FloatingCompassMapTool(QgsMapTool):
         # =====================
         # RIGHT CLICK HANDLING (FIXED)→ CONTEXT MENU (STEP 1)
         # =====================
-        if event.button() == Qt.RightButton:
+        if event.button() == Qt.MouseButton.RightButton:
             # PRIORITY 1: CENTER → RESIZE RING (OLD BEHAVIOR)
             if self.dist(pos, self.center) <= self.hit_center:
                 self.active_handle = self.HANDLE_RING_RESIZE
@@ -527,7 +536,7 @@ class FloatingCompassMapTool(QgsMapTool):
         # CENTER
         # =====================
         if self.dist(pos, self.center) <= self.hit_center:
-            if event.button() == Qt.LeftButton:
+            if event.button() == Qt.MouseButton.LeftButton:
                 self.active_handle = self.HANDLE_CENTER_MOVE
                 self.last_mouse = pos
 
@@ -536,7 +545,7 @@ class FloatingCompassMapTool(QgsMapTool):
                 self.hold_timer.start(self.hold_to_open_settings_ms)
                 return
 
-            elif event.button() == Qt.RightButton:
+            elif event.button() == Qt.MouseButton.RightButton:
                 self.active_handle = self.HANDLE_RING_RESIZE
                 self.last_mouse = pos
                 return
@@ -611,12 +620,12 @@ class FloatingCompassMapTool(QgsMapTool):
         # =====================
         self.hover_handle = self.HANDLE_NONE
         tooltip = ""
-        cursor = Qt.ArrowCursor
+        cursor = Qt.CursorShape.ArrowCursor
 
         if self.dist(pos, self.center) <= self.hit_center:
             self.hover_handle = self.HANDLE_CENTER_MOVE
             tooltip = "Move Protractor (Hold = Settings)"
-            cursor = Qt.SizeAllCursor
+            cursor = Qt.CursorShape.SizeAllCursor
         else:
             for idx, arm in enumerate(getattr(self, "arms", [])):
                 if not arm.get("enabled") or not arm.get("rotatable"):
@@ -643,13 +652,13 @@ class FloatingCompassMapTool(QgsMapTool):
                 if self.dist(pos, end) <= self.hit_endpoint:
                     self.hover_handle = self.HANDLE_ARM_A_RESIZE
                     tooltip = f"Resize Arm {arm.get('id', '')}"
-                    cursor = Qt.SizeVerCursor
+                    cursor = Qt.CursorShape.SizeVerCursor
                     break
 
                 if self.point_to_line_dist(pos, self.center, end) <= self.hit_arm_line:
                     self.hover_handle = self.HANDLE_ARM_A_ROTATE
                     tooltip = f"Rotate Arm {arm.get('id', '')} (Shift = Free)"
-                    cursor = Qt.CrossCursor
+                    cursor = Qt.CursorShape.CrossCursor
                     break
 
             if self.hover_handle == self.HANDLE_NONE:
@@ -659,7 +668,7 @@ class FloatingCompassMapTool(QgsMapTool):
                 ):
                     self.hover_handle = self.HANDLE_ROTATE_BOTH
                     tooltip = "Rotate Both Arms / Resize Ring (RMB)"
-                    cursor = Qt.OpenHandCursor
+                    cursor = Qt.CursorShape.OpenHandCursor
 
         self.canvas.setCursor(cursor)
         self.iface.mainWindow().statusBar().showMessage(tooltip)
@@ -681,7 +690,7 @@ class FloatingCompassMapTool(QgsMapTool):
             else:
                 return
 
-        self.is_free_mode = bool(event.modifiers() & Qt.ShiftModifier)
+        self.is_free_mode = bool(event.modifiers() & Qt.KeyboardModifier.ShiftModifier)
 
         # =====================
         # MOVE / ROTATE / RESIZE
@@ -726,8 +735,6 @@ class FloatingCompassMapTool(QgsMapTool):
             )
 
         self.overlay.update()
-
-
 
 
     def canvasReleaseEvent(self, event):
@@ -779,7 +786,7 @@ class FloatingCompassMapTool(QgsMapTool):
         self._holding_center = False
         self.active_handle = self.HANDLE_NONE
         dlg = FloatingCompassSettingsDialog(self, self.iface.mainWindow())
-        dlg.exec_()
+        dlg.exec()
     
     
     # =====================
@@ -793,6 +800,8 @@ class FloatingCompassMapTool(QgsMapTool):
         - Mode: NORMAL
         - Mode: SITE_AUDIT (3 arms only)
         - Mode: MULTI → 4 / 5 / 6 Arms
+        - 🔥 Upgrade to Pro (BARU)
+        - Close Compass
         """
 
         if self.center is None:
@@ -804,8 +813,8 @@ class FloatingCompassMapTool(QgsMapTool):
         if abs(self.dist(pos, self.center) - self.ring_radius) > self.hit_ring:
             return
 
-        from qgis.PyQt.QtWidgets import QMenu, QAction
-        from qgis.PyQt.QtGui import QIcon
+        from qgis.PyQt.QtWidgets import QMenu
+        from qgis.PyQt.QtGui import QAction, QIcon
         import os
 
         menu = QMenu(self.canvas)
@@ -823,6 +832,18 @@ class FloatingCompassMapTool(QgsMapTool):
         
         act_settings.triggered.connect(self.open_settings_dialog)
         menu.addAction(act_settings)
+
+        # -----------------
+        # 🔥 SHOW RING (BARU)
+        # -----------------
+        self.act_show_ring = QAction(
+            "⭕ Show Ring",
+            self.canvas
+        )
+        self.act_show_ring.setCheckable(True)
+        self.act_show_ring.setChecked(getattr(self, "show_ring", True))
+        self.act_show_ring.triggered.connect(self._toggle_show_ring)
+        menu.addAction(self.act_show_ring)
 
         menu.addSeparator()
 
@@ -853,16 +874,14 @@ class FloatingCompassMapTool(QgsMapTool):
         menu.addAction(act_site)
 
         # -----------------
-        # Mode → MULTI (Submenu)
+        # Mode → MULTI (Submenu) - TETAP ADA!
         # -----------------
         menu_multi = QMenu("Mode → MULTI", menu)
         menu_multi.setIcon(
             QIcon(os.path.join(icon_dir, "mode_multi.svg"))
         )
 
-        
         for arms in (4, 5, 6):
-
             if arms == 4:
                 icon_name = "arms_4.svg"
             elif arms == 5:
@@ -886,11 +905,90 @@ class FloatingCompassMapTool(QgsMapTool):
             menu_multi.addAction(act)
             
         menu.addMenu(menu_multi)
-        
-        # tampilkan menu
-        menu.exec_(self.canvas.mapToGlobal(event.pos()))
 
+        # =========================
+        # 🔥 UPGRADE TO PRO (BARU) - SETELAH MODE MULTI
+        # =========================
+        menu.addSeparator()
+        act_upgrade = QAction(
+            "🚀  Upgrade to Pro" ,
+            self.canvas
+        )
+        act_upgrade.setToolTip("Upgrade to Floating Compass Pro for advanced features")
+        act_upgrade.triggered.connect(self._show_upgrade_dialog)
+        menu.addAction(act_upgrade)
 
+        # =========================
+        # CLOSE COMPASS (PALING BAWAH)
+        # =========================
+        menu.addSeparator()
+
+        act_close = QAction(
+            "✕ Close (Shortcut Esc)",
+            self.canvas
+        )
+
+        def _close_compass_with_promo():
+            """
+            Close compass and show upgrade promo (with frequency limit).
+            """
+            from qgis.PyQt.QtCore import QSettings, QDateTime
+            
+            # ==========================
+            # CEK FREKUENSI (1x per 24 jam)
+            # ==========================
+            s = QSettings()
+            s.beginGroup("FloatingCompass")
+            
+            # Simpan timestamp terakhir promo ditampilkan
+            last_promo = s.value("last_upgrade_promo", 0, int)
+            current_time = QDateTime.currentDateTime().toSecsSinceEpoch()
+            
+            # 24 jam = 86400 detik
+            show_promo = True
+            if last_promo > 0:
+                diff = current_time - last_promo
+                if diff < 86400:  # kurang dari 24 jam
+                    show_promo = False
+            
+            # ==========================
+            # TUTUP COMPASS (SELALU)
+            # ==========================
+            self.overlay.prepareGeometryChange()
+            self.center = None
+            self.overlay.setVisible(False)
+            self.overlay.update()
+            
+            # kembali ke Pan Tool
+            self.iface.actionPan().trigger()
+            
+            # uncheck toolbar button
+            if hasattr(self, "plugin_action") and self.plugin_action:
+                self.plugin_action.setChecked(False)
+            
+            # ==========================
+            # TAMPILKAN PROMO (JIKA BELUM)
+            # ==========================
+            if show_promo:
+                # Update timestamp
+                s.setValue("last_upgrade_promo", current_time)
+                s.endGroup()
+                
+                # Tampilkan promo dialog
+                self._show_close_upgrade_dialog()
+            else:
+                s.endGroup()
+
+        act_close.triggered.connect(
+            _close_compass_with_promo
+        )
+
+        menu.addAction(act_close)
+
+        # =========================
+        # SHOW MENU
+        # =========================
+        menu.exec(self.canvas.mapToGlobal(event.pos()))
     
     
     # =====================
@@ -926,7 +1024,9 @@ class FloatingCompassMapTool(QgsMapTool):
         def to_int(v, default=0):
             try:
                 return int(v)
-            except Exception:
+            except Exception as e:
+                import sys
+                print(f"Warning: Failed to convert to int: {e}", file=sys.stderr)
                 return default
 
         # =====================
@@ -961,6 +1061,9 @@ class FloatingCompassMapTool(QgsMapTool):
 
         if "show_angle_text" in s:
             self.show_angle_text = bool(s["show_angle_text"])
+
+        if "show_ring" in s:
+            self.show_ring = bool(s["show_ring"])
 
         if "outline_enabled" in s:
             self.outline_enabled = bool(s["outline_enabled"])
@@ -1128,8 +1231,9 @@ class FloatingCompassMapTool(QgsMapTool):
         if "crosshair_color" in s:
             try:
                 self.crosshair_color = QColor(s["crosshair_color"])
-            except Exception:
-                pass
+            except Exception as e:
+                import sys
+                print(f"Warning: Failed to set crosshair color: {e}", file=sys.stderr)
 
         # =====================
         # ARM MODEL + COLORS
@@ -1149,8 +1253,9 @@ class FloatingCompassMapTool(QgsMapTool):
             if key in s and idx < len(self.arms):
                 try:
                     self.arms[idx]["color"] = QColor(s[key])
-                except Exception:
-                    pass
+                except Exception as e:
+                    import sys
+                    print(f"Warning: Failed to set arm color for arm {idx}: {e}", file=sys.stderr)
 
         # =====================
         # MODE PRESET
@@ -1314,13 +1419,14 @@ class FloatingCompassMapTool(QgsMapTool):
         proj = QPointF(ax + t * dx, ay + t * dy)
         return self.dist(p, proj)
 
+
     def keyPressEvent(self, event):
         # =====================
         # RESET CEPAT (Shortcut: R) → Reset ke default settings
         # TOGGLE SNAP (Shortcut: S) → Menampilkan Snap degrees      
         # =====================
 
-        if event.key() == Qt.Key_S:
+        if event.key() == Qt.Key.Key_S:
             self.snap_enabled = not self.snap_enabled
 
             # optional: feedback ringan (status bar, tidak ke canvas)
@@ -1329,23 +1435,49 @@ class FloatingCompassMapTool(QgsMapTool):
                 self.iface.statusBarIface().showMessage(
                     f"Protractor Snap {state} ({self.snap_step}°)", 2000
                 )
-            except Exception:
-                pass
+            except Exception as e:
+                import sys
+                print(f"Warning: Failed to show status bar message: {e}", file=sys.stderr)
 
             self.overlay.update()
             return
             
-        if event.key() == Qt.Key_R and self.center is not None:
+        if event.key() == Qt.Key.Key_R and self.center is not None:
+            # =====================
+            # RESET GEOMETRY TO DEFAULT
+            # =====================
+            # Reset ring radius ke default
+            self.ring_radius = 200
+
+            # Pastikan arm model sudah ter-init
+            self._init_arms_if_needed()
+
+            # Reset arm model: angle + radius ke default
+            default_angles = [0.0, 120.0, 240.0, 60.0, 180.0, 300.0]
+
+            for idx, arm in enumerate(self.arms):
+                # Reset angle ke default
+                arm["angle_deg"] = default_angles[idx]
+
+                # Reset radius ke default (clamp ke min/max)
+                arm["radius_px"] = self.clamp(
+                    200,
+                    self.arm_radius_min,
+                    self.arm_radius_max
+                )
+
+            # Sync legacy helper fields
+            if len(self.arms) >= 2:
+                self.arm_a_angle = self.arms[0]["angle_deg"]
+                self.arm_b_angle = self.arms[1]["angle_deg"]
+
+            # Persist ke QSettings
             s = QSettings()
             s.beginGroup(self.SETTINGS_GROUP)
-
-            self.ring_radius = s.value("ring_radius", 100, int)
-            self.arm_a_radius = s.value("arm_a_radius", 90, int)
-            self.arm_b_radius = s.value("arm_b_radius", 120, int)
-
-            self.arm_a_angle = 0.0
-            self.arm_b_angle = 90.0
-
+            s.setValue("ring_radius", int(self.ring_radius))
+            for idx, arm in enumerate(self.arms):
+                s.setValue(f"arm_{idx}_angle", float(arm["angle_deg"]))
+                s.setValue(f"arm_{idx}_radius", int(arm["radius_px"]))
             s.endGroup()
 
             # bounding berubah → wajib
@@ -1356,7 +1488,7 @@ class FloatingCompassMapTool(QgsMapTool):
         # =====================
         # CLEAR PROTRACTOR (ESC)
         # =====================
-        if event.key() == Qt.Key_Escape and self.center is not None:
+        if event.key() == Qt.Key.Key_Escape and self.center is not None:
             self.overlay.prepareGeometryChange()
             self.center = None
             self.overlay.setVisible(False)
@@ -1369,11 +1501,196 @@ class FloatingCompassMapTool(QgsMapTool):
                 self.plugin_action.setChecked(False)
             return
 
+    def _show_upgrade_dialog(self):
+        """
+        Show upgrade dialog with feature comparison from context menu.
+        """
+        from qgis.PyQt.QtWidgets import QMessageBox, QPushButton
+        from qgis.PyQt.QtCore import Qt, QUrl
+        from qgis.PyQt.QtGui import QDesktopServices
+        
+        msg = QMessageBox(self.canvas)
+        msg.setWindowTitle("🚀 Upgrade to Floating Compass Pro")
+        msg.setTextFormat(Qt.TextFormat.RichText)
+        msg.setText("""
+            <h2 style="color: #2c3e50;">Floating Compass Pro</h2>
+            <p style="font-size: 14px; color: #555;">
+                Upgrade now and unlock <b>advanced features</b> for RF Planning and GIS professionals:
+            </p>
+            <ul style="font-size: 13px; color: #333; line-height: 1.8;">
+                <li>✅ <b>Multi-Arm Mode</b> (up to 6 independent arms)</li>
+                <li>✅ <b>Actual vs Proposed</b> Group System</li>
+                <li>✅ <b>Beam Profiles</b> (Ericsson, Huawei, Generic)</li>
+                <li>✅ <b>HUD</b> with Live ISG (Inter Sector Gap)</li>
+                <li>✅ <b>Ruler Mode &amp; Markers</b> (measure distance &amp; azimuth)</li>
+                <li>✅ <b>Priority Support</b> &amp; Lifetime Updates</li>
+                <li>✅ <b>Full Customization</b> (colors, fonts, styles)</li>
+            </ul>
+            <br>
+            <p style="font-size: 13px; color: #555;">
+                <a href="https://github.com/erlrich/FloatingCompassPro" style="color: #3498db; font-weight: bold;">
+                    📖 View Full Feature List &amp; Manual
+                </a>
+            </p>
+            <br>
+            <p style="font-size: 11px; color: #999;">
+                💡 No commitment — explore the features first.
+            </p>
+        """)
+        
+        # ==========================
+        # TOMBOL CUSTOM
+        # ==========================
+        btn_learn = QPushButton("📖 Learn More")
+        btn_learn.setStyleSheet("""
+            QPushButton {
+                background-color: #3498db;
+                color: white;
+                font-weight: bold;
+                padding: 8px 20px;
+                border-radius: 6px;
+            }
+            QPushButton:hover {
+                background-color: #2980b9;
+            }
+        """)
+        btn_learn.clicked.connect(lambda: QDesktopServices.openUrl(QUrl("https://github.com/erlrich/FloatingCompassPro")))
+        
+        btn_later = QPushButton("Later")
+        btn_later.setStyleSheet("""
+            QPushButton {
+                background-color: #95a5a6;
+                color: white;
+                padding: 8px 20px;
+                border-radius: 6px;
+            }
+            QPushButton:hover {
+                background-color: #7f8c8d;
+            }
+        """)
+        btn_later.clicked.connect(msg.accept)
+        
+        # ==========================
+        # TAMBAHKAN TOMBOL KE DIALOG
+        # ==========================
+        msg.addButton(btn_learn, QMessageBox.ButtonRole.AcceptRole)
+        msg.addButton(btn_later, QMessageBox.ButtonRole.RejectRole)
+        
+        msg.setIcon(QMessageBox.Icon.Information)
+        msg.exec()
+        
 
+    def _show_close_upgrade_dialog(self):
+        """
+        Show upgrade promo dialog when user closes compass.
+        Only shown once per 24 hours.
+        """
+        from qgis.PyQt.QtWidgets import QMessageBox, QPushButton
+        from qgis.PyQt.QtCore import Qt, QUrl
+        from qgis.PyQt.QtGui import QDesktopServices
+        
+        msg = QMessageBox(self.canvas)
+        msg.setWindowTitle("💡 Floating Compass Pro")
+        msg.setTextFormat(Qt.TextFormat.RichText)
+        msg.setText("""
+            <h2 style="color: #2c3e50;">Enjoying Floating Compass? 🧭</h2>
+            <br>
+            <p style="font-size: 14px; color: #555;">
+                Upgrade to <b style="color: #f39c12;">Floating Compass Pro</b> 
+                and unlock <b>advanced features</b> for RF Planning and GIS:
+            </p>
+            <ul style="font-size: 13px; color: #333; line-height: 1.8;">
+                <li>✅ <b>Multi-Arm Mode</b> (up to 6 independent arms)</li>
+                <li>✅ <b>Actual vs Proposed</b> Group System</li>
+                <li>✅ <b>Beam Profiles</b> (Ericsson, Huawei, Generic)</li>
+                <li>✅ <b>HUD</b> with Live ISG (Inter Sector Gap)</li>
+                <li>✅ <b>Ruler Mode &amp; Markers</b></li>
+                <li>✅ <b>Priority Support</b> &amp; Lifetime Updates</li>
+            </ul>
+            <br>
+            <p style="font-size: 13px; color: #555;">
+                <a href="https://github.com/erlrich/FloatingCompassPro" style="color: #3498db; font-weight: bold;">
+                    📖 View Full Feature List &amp; Manual
+                </a>
+            </p>
+            <br>
+            <p style="font-size: 11px; color: #999;">
+                💡 No commitment — explore the features first.
+            </p>
+        """)
+        
+        # ==========================
+        # TOMBOL CUSTOM (SAMA DENGAN UPGRADE DIALOG)
+        # ==========================
+        btn_learn = QPushButton("📖 Learn More")
+        btn_learn.setStyleSheet("""
+            QPushButton {
+                background-color: #3498db;
+                color: white;
+                font-weight: bold;
+                padding: 8px 20px;
+                border-radius: 6px;
+            }
+            QPushButton:hover {
+                background-color: #2980b9;
+            }
+        """)
+        btn_learn.clicked.connect(lambda: QDesktopServices.openUrl(QUrl("https://github.com/erlrich/FloatingCompassPro")))
+        
+        
+        btn_later = QPushButton("Later")
+        btn_later.setStyleSheet("""
+            QPushButton {
+                background-color: #95a5a6;
+                color: white;
+                padding: 8px 20px;
+                border-radius: 6px;
+            }
+            QPushButton:hover {
+                background-color: #7f8c8d;
+            }
+        """)
+        btn_later.clicked.connect(msg.accept)
+        
+        # ==========================
+        # TAMBAHKAN TOMBOL KE DIALOG
+        # ==========================
+        msg.addButton(btn_learn, QMessageBox.ButtonRole.AcceptRole)
+        msg.addButton(btn_later, QMessageBox.ButtonRole.RejectRole)
+        
+        msg.setIcon(QMessageBox.Icon.Information)
+        msg.exec()
+        
 
+    def _toggle_show_ring(self):
+        """
+        Toggle ring visibility and persist to settings.
+        """
+        from qgis.PyQt.QtCore import QSettings
+        
+        # Toggle state
+        new_state = not getattr(self, "show_ring", True)
+        self.show_ring = new_state
+        
+        # Update checkbox
+        if hasattr(self, "act_show_ring"):
+            self.act_show_ring.setChecked(new_state)
+        
+        # Persist to QSettings
+        s = QSettings()
+        s.beginGroup(self.SETTINGS_GROUP)
+        s.setValue("show_ring", new_state)
+        s.endGroup()
+        
+        # Redraw overlay
+        if self.overlay:
+            self.overlay.prepareGeometryChange()
+            self.overlay.update()
+            
+        
     def invalidate_geometry(self):
         """
         Force QGraphicsScene to re-evaluate boundingRect.
         MUST be called when center / radius changes from None.
         """
-        self.prepareGeometryChange()
+        self.prepareGeometryChange()        

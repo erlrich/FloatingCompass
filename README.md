@@ -26,6 +26,28 @@ Unlike traditional bearing measurement utilities, Floating Compass focuses on co
 
 ---
 
+## 🚀 Looking for More? Upgrade to Pro
+
+Floating Compass is available in two editions:
+
+| Feature | Free | Pro |
+|:---|:---:|:---:|
+| Basic 2-Arm Mode | ✅ | ✅ |
+| Survey Mode (3-Arm) | ✅ | ✅ |
+| Multi-Arm Mode (2-6) | ❌ | ✅ |
+| Beam Profiles | ❌ | ✅ |
+| HUD with ISG | ❌ | ✅ |
+| Ruler Mode & Markers | ❌ | ✅ |
+| Export/Import Settings | ❌ | ✅ |
+| Priority Support | ❌ | ✅ |
+| Lifetime Updates | ❌ | ✅ |
+
+👉 **[Get Floating Compass Pro](https://github.com/erlrich/FloatingCompassPro)**
+
+Unlock advanced features for RF Planning and GIS professionals.
+
+---
+
 ## 🧠 Design Philosophy
 
 Floating Compass is built around a workflow-centric interaction model.
