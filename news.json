@@ -1,0 +1,30 @@
+{
+  "version": "1",
+  "last_updated": "2026-10-14",
+  "news": [
+    {
+      "id": "2026-10-14-001",
+      "title": "Floating Compass v1.1.1 Released",
+      "date": "2026-10-14",
+      "content": "Maintenance update: Qt6 compatibility improvements for QGIS 4, plus an informational news panel.",
+      "link": "https://github.com/erlrich/FloatingCompass/releases/tag/v1.1.1",
+      "priority": "high"
+    },
+    {
+      "id": "2026-10-14-002",
+      "title": "Floating Compass Pro",
+      "date": "2026-10-14",
+      "content": "Advanced features for RF planning and GIS workflows are available in Floating Compass Pro, including multi-arm mode, beam profiles, HUD with live ISG, and ruler mode.",
+      "link": "https://aktivioo.com",
+      "priority": "low"
+    },
+    {
+      "id": "2026-10-14-003",
+      "title": "Related QGIS Tools",
+      "date": "2026-10-14",
+      "content": "Additional QGIS plugins by the same author are available, including Equidistant Site Center for balanced site placement.",
+      "link": "https://github.com/erlrich/equidistant-site-center-qgis",
+      "priority": "low"
+    }
+  ]
+}
